@@ -2,12 +2,14 @@ package crypto
 
 import (
 	"crypto/ed25519"
-	"fmt"
+	"crypto/rand"
+	"io"
 )
 
 const (
 	PrivKeyLen = 64
 	PubKeyLen  = 32
+	seedLen    = 32
 )
 
 type PrivateKey struct {
@@ -17,18 +19,23 @@ type PublicKey struct {
 	key ed25519.PublicKey
 }
 
-func GeneratePrivateKey() *PrivateKey {
-	_, privateKey, err := ed25519.GenerateKey(nil)
-	if err != nil {
-		fmt.Errorf("generate error:%w", err)
-	}
-	return &PrivateKey{
-		key: privateKey,
-	}
+type Signature struct {
+	value []byte
 }
 
-func (p *PrivateKey) Sign(msg []byte) []byte {
-	return ed25519.Sign(p.key, msg)
+func GeneratePrivateKey() *PrivateKey {
+	seed := make([]byte, seedLen)
+	_, err := io.ReadFull(rand.Reader, seed)
+	if err != nil {
+		panic(err)
+	}
+	return &PrivateKey{key: ed25519.NewKeyFromSeed(seed)}
+}
+
+func (p *PrivateKey) Sign(msg []byte) *Signature {
+	return &Signature{
+		value: ed25519.Sign(p.key, msg),
+	}
 }
 
 func (p *PrivateKey) Public() *PublicKey {
@@ -37,4 +44,12 @@ func (p *PrivateKey) Public() *PublicKey {
 	return &PublicKey{
 		key: pub,
 	}
+}
+
+func (s *Signature) Bytes() []byte {
+	return s.value
+}
+
+func (s *Signature) Verify(pubKey *PublicKey, msg []byte) bool {
+	return ed25519.Verify(pubKey.key, msg, s.value)
 }

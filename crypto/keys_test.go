@@ -1,9 +1,10 @@
 package crypto
 
 import (
-	"crypto/ed25519"
 	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestKey(t *testing.T) {
@@ -14,14 +15,18 @@ func TestKey(t *testing.T) {
 
 	//test sign the message
 	message := []byte("this is a test message")
-	signature := privKey.Sign(message)
-	fmt.Printf("Signature(HEX):%v\n", signature)
+	sig := privKey.Sign(message)
+	fmt.Printf("Signature(HEX):%v\n", sig)
 
 	//test verify the message
-	isValid := ed25519.Verify(pubKey.key, message, signature)
-	if isValid {
-		t.Logf("verify ok %v is a valid message:\n", message)
-	} else {
-		t.Logf("verify faild %v isn't a valid message\n", message)
-	}
+	assert.True(t, sig.Verify(pubKey, message))
+
+	//test invalid message
+	falseMsg := []byte("ni hao")
+	assert.False(t, sig.Verify(pubKey, falseMsg))
+
+	//test invalid public key
+	invalidPrivateKey := GeneratePrivateKey()
+	invalidPublicKey := invalidPrivateKey.Public()
+	assert.False(t, sig.Verify(invalidPublicKey, message))
 }
