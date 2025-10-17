@@ -30,3 +30,20 @@ func TestKey(t *testing.T) {
 	invalidPublicKey := invalidPrivateKey.Public()
 	assert.False(t, sig.Verify(invalidPublicKey, message))
 }
+
+func TestSign(t *testing.T) {
+	privKey := GeneratePrivateKey()
+	publicKey := privKey.Public()
+	t.Logf("privKey:%v", privKey)
+	assert.True(t, len(privKey.key) == 64)
+	t.Logf("publicKey:%v", publicKey)
+	assert.True(t, len(publicKey.key) == 32)
+}
+
+func TestPublicKey_Address(t *testing.T) {
+	privKey := GeneratePrivateKey()
+	pubKey := privKey.Public()
+	address := pubKey.Address()
+	assert.Equal(t, addressLen, len(address.value))
+	fmt.Println(address.String())
+}
